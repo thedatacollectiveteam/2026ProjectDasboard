@@ -1,0 +1,682 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Data Collective ? 2026 Project Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;700;800&family=Space+Mono:wght@400;700&family=Bebas+Neue&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #0a0a0a;
+            --bg-medium: #1a1a1a;
+            --bg-card: #252525;
+            --accent-cyan: #00ffff;
+            --accent-magenta: #ff00ff;
+            --accent-yellow: #ffff00;
+            --text-primary: #ffffff;
+            --text-secondary: #a0a0a0;
+            --green: #00ff41;
+            --yellow: #ffff00;
+            --red: #ff0040;
+            --border: #333;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'JetBrains Mono', monospace;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+            overflow-x: hidden;
+        }
+
+        /* Animated background grid */
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-image: 
+                linear-gradient(rgba(0, 255, 255, 0.03) 1px, transparent 1px),
+                linear-gradient(90deg, rgba(0, 255, 255, 0.03) 1px, transparent 1px);
+            background-size: 50px 50px;
+            pointer-events: none;
+            z-index: 0;
+            animation: gridMove 20s linear infinite;
+        }
+
+        @keyframes gridMove {
+            0% { transform: translate(0, 0); }
+            100% { transform: translate(50px, 50px); }
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            position: relative;
+            z-index: 1;
+        }
+
+        header {
+            margin-bottom: 40px;
+            border-left: 4px solid var(--accent-cyan);
+            padding-left: 20px;
+            animation: slideIn 0.6s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateX(-30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateX(0);
+            }
+        }
+
+        h1 {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 4rem;
+            letter-spacing: 4px;
+            color: var(--accent-cyan);
+            text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+            margin-bottom: 10px;
+            line-height: 1;
+        }
+
+        .subtitle {
+            font-size: 1rem;
+            color: var(--text-secondary);
+            text-transform: uppercase;
+            letter-spacing: 2px;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 40px;
+            animation: fadeIn 0.8s ease-out 0.2s both;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .stat-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 25px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(90deg, var(--accent-cyan), var(--accent-magenta));
+            transform: scaleX(0);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover::before {
+            transform: scaleX(1);
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 10px 30px rgba(0, 255, 255, 0.2);
+        }
+
+        .stat-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            color: var(--text-secondary);
+            margin-bottom: 10px;
+        }
+
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 800;
+            color: var(--accent-cyan);
+            font-family: 'Bebas Neue', sans-serif;
+        }
+
+        .stat-subtext {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin-top: 8px;
+        }
+
+        .filters {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 25px;
+            margin-bottom: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+            animation: fadeIn 0.8s ease-out 0.4s both;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .filter-label {
+            font-size: 0.75rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+        }
+
+        select, input {
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            padding: 10px 15px;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 10px rgba(0, 255, 255, 0.3);
+        }
+
+        select:hover, input:hover {
+            border-color: var(--accent-cyan);
+        }
+
+        .timeline-container {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            padding: 30px;
+            margin-bottom: 30px;
+            overflow-x: auto;
+            animation: fadeIn 0.8s ease-out 0.6s both;
+        }
+
+        .timeline-header {
+            font-family: 'Bebas Neue', sans-serif;
+            font-size: 1.5rem;
+            letter-spacing: 2px;
+            margin-bottom: 20px;
+            color: var(--accent-magenta);
+            border-bottom: 2px solid var(--border);
+            padding-bottom: 10px;
+        }
+
+        .projects-grid {
+            display: grid;
+            gap: 15px;
+            animation: fadeIn 0.8s ease-out 0.8s both;
+        }
+
+        .project-card {
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            border-left: 4px solid var(--green);
+            padding: 20px;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .project-card::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            right: 0;
+            width: 0;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0, 255, 255, 0.1));
+            transition: width 0.3s ease;
+        }
+
+        .project-card:hover::after {
+            width: 100%;
+        }
+
+        .project-card:hover {
+            transform: translateX(5px);
+            border-color: var(--accent-cyan);
+            box-shadow: -5px 0 20px rgba(0, 255, 255, 0.2);
+        }
+
+        .project-card.yellow {
+            border-left-color: var(--yellow);
+        }
+
+        .project-card.red {
+            border-left-color: var(--red);
+        }
+
+        .project-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 15px;
+            gap: 20px;
+        }
+
+        .project-name {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            flex: 1;
+        }
+
+        .status-badge {
+            padding: 4px 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-radius: 2px;
+        }
+
+        .status-badge.green {
+            background: var(--green);
+            color: var(--bg-dark);
+        }
+
+        .status-badge.yellow {
+            background: var(--yellow);
+            color: var(--bg-dark);
+        }
+
+        .status-badge.red {
+            background: var(--red);
+            color: var(--text-primary);
+        }
+
+        .project-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+            gap: 12px;
+            margin-top: 15px;
+            padding-top: 15px;
+            border-top: 1px solid var(--border);
+        }
+
+        .detail-item {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .detail-label {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: var(--text-secondary);
+        }
+
+        .detail-value {
+            font-size: 0.9rem;
+            color: var(--text-primary);
+        }
+
+        .team-members {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 6px;
+            margin-top: 12px;
+        }
+
+        .team-badge {
+            background: var(--bg-dark);
+            border: 1px solid var(--accent-cyan);
+            padding: 4px 10px;
+            font-size: 0.75rem;
+            color: var(--accent-cyan);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+
+        .complexity-indicator {
+            display: inline-flex;
+            gap: 3px;
+            align-items: center;
+        }
+
+        .complexity-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-magenta);
+            border-radius: 50%;
+        }
+
+        .no-results {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-secondary);
+            font-size: 1.2rem;
+        }
+
+        footer {
+            margin-top: 60px;
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid var(--border);
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            animation: fadeIn 0.8s ease-out 1s both;
+        }
+
+        .glitch {
+            animation: glitch 3s infinite;
+        }
+
+        @keyframes glitch {
+            0%, 100% { transform: translate(0); }
+            20% { transform: translate(-2px, 2px); }
+            40% { transform: translate(-2px, -2px); }
+            60% { transform: translate(2px, 2px); }
+            80% { transform: translate(2px, -2px); }
+        }
+
+        @media (max-width: 768px) {
+            h1 {
+                font-size: 2.5rem;
+            }
+            
+            .stat-value {
+                font-size: 2rem;
+            }
+            
+            .project-header {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1 class="glitch">DATA COLLECTIVE</h1>
+            <div class="subtitle">2026 Project Dashboard // Tier 1 Import Support</div>
+        </header>
+
+        <div class="stats-grid" id="statsGrid">
+            <div class="stat-card">
+                <div class="stat-label">Total Projects</div>
+                <div class="stat-value" id="totalProjects">0</div>
+                <div class="stat-subtext">Implementations scheduled</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Status: Green</div>
+                <div class="stat-value" id="greenCount" style="color: var(--green);">0</div>
+                <div class="stat-subtext">On track</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Status: Yellow</div>
+                <div class="stat-value" id="yellowCount" style="color: var(--yellow);">0</div>
+                <div class="stat-subtext">At risk</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Status: Red</div>
+                <div class="stat-value" id="redCount" style="color: var(--red);">0</div>
+                <div class="stat-subtext">Critical</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Avg Complexity</div>
+                <div class="stat-value" id="avgComplexity">0</div>
+                <div class="stat-subtext">Out of 5</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-label">Team Size</div>
+                <div class="stat-value">6</div>
+                <div class="stat-subtext">Rafa ? Sam ? Kevin ? Shema ? Cameron ? Timo</div>
+            </div>
+        </div>
+
+        <div class="filters">
+            <div class="filter-group">
+                <label class="filter-label">Status</label>
+                <select id="statusFilter">
+                    <option value="">All Statuses</option>
+                    <option value="Green">Green</option>
+                    <option value="Yellow">Yellow</option>
+                    <option value="Red">Red</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Team Member</label>
+                <select id="teamFilter">
+                    <option value="">All Team Members</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Complexity</label>
+                <select id="complexityFilter">
+                    <option value="">All Complexities</option>
+                    <option value="2">2 - Low</option>
+                    <option value="3">3 - Medium</option>
+                    <option value="5">5 - High</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Search</label>
+                <input type="text" id="searchInput" placeholder="Client name...">
+            </div>
+        </div>
+
+        <div class="timeline-container">
+            <div class="timeline-header">// PROJECT TIMELINE</div>
+            <div class="projects-grid" id="projectsGrid"></div>
+        </div>
+
+        <footer>
+            <strong>THE DATA COLLECTIVE</strong> // bswift Tier 1 Import Support Team<br>
+            Last Updated: <span id="lastUpdated"></span>
+        </footer>
+    </div>
+
+    <script>
+        const projectsData = [
+            {"Client Name":"Saltchuk Enrollment","Shard":"S","Complexity":5.0,"Data People":"Rafa\\nTimo","Live Date":"2025-12-31","Overall Status":"Yellow","Red Status Reason":"","Test 1 Begin":"","Test 1 End":"","Test 2 Begin":"","Test 2 End":"","Test 3 Begin":"","Test 3 End":"","Production Begin":"","Production End":"","Refresh Begin":"","Refresh End":"","Modified Date":"2025-11-25 08:43:34.000"},
+            {"Client Name":"OSG/Tote","Shard":"S","Complexity":3.0,"Data People":"Kevin\\nTimo","Live Date":"2025-12-31","Overall Status":"Green","Red Status Reason":"","Test 1 Begin":"","Test 1 End":"","Test 2 Begin":"","Test 2 End":"","Test 3 Begin":"","Test 3 End":"","Production Begin":"","Production End":"","Refresh Begin":"","Refresh End":"","Modified Date":"2025-11-25 08:43:34.000"},
+            {"Client Name":"Vail","Shard":"","Complexity":3.0,"Data People":"Rafa\\nSam","Live Date":"2026-03-01","Overall Status":"Green","Red Status Reason":"","Test 1 Begin":"2025-10-27","Test 1 End":"2025-11-07","Test 2 Begin":"2025-12-02","Test 2 End":"2025-12-18","Test 3 Begin":"","Test 3 End":"","Production Begin":"2026-01-20","Production End":"2026-02-03","Refresh Begin":"2026-02-17","Refresh End":"2026-02-25","Modified Date":"2025-11-24 13:00:48.767"},
+            {"Client Name":"Insperity Phase 2","Shard":"AE","Complexity":5.0,"Data People":"Kevin","Live Date":"2026-04-01","Overall Status":"Green","Red Status Reason":"","Test 1 Begin":"","Test 1 End":"","Test 2 Begin":"","Test 2 End":"","Test 3 Begin":"","Test 3 End":"","Production Begin":"","Production End":"","Refresh Begin":"","Refresh End":"","Modified Date":"2025-11-25 07:41:29.000"},
+            {"Client Name":"Construction Resources","Shard":"","Complexity":"","Data People":"","Live Date":"2026-04-01","Overall Status":"Green","Red Status Reason":"","Test 1 Begin":"","Test 1 End":"","Test 2 Begin":"","Test 2 End":"","Test 3 Begin":"","Test 3 End":"","Production Begin":"","Production End":"","Refresh Begin":"","Refresh End":"","Modified Date":"2025-12-02 13:12:08.000"},
+            {"Client Name":"Brookdale","Shard":"AB","Complexity":3.0,"Data People":"Cameron\\nRafa\\nSam","Live Date":"2026-05-01","Overall Status":"Green","Red Status Reason":"","Test 1 Begin":"","Test 1 End":"","Test 2 Begin":"","Test 2 End":"","Test 3 Begin":"","Test 3 End":"","Production Begin":"","Production End":"","Refresh Begin":"","Refresh End":"","Modified Date":"2025-11-25 07:41:29.000"},
+            {"Client Name":"UMMS","Shard":"","Complexity":3.0,"Data People":"Cameron\\nRafa\\nShema\\nTimo","Live Date":"2026-05-01","Overall Status":"Green","Red Status Reason":"","Test 1 Begin":"2026-01-23","Test 1 End":"2026-02-13","Test 2 Begin":"2026-03-13","Test 2 End":"2026-03-27","Test 3 Begin":"","Test 3 End":"","Production Begin":"2026-04-24","Production End":"2026-05-08","Refresh Begin":"","Refresh End":"","Modified Date":"2025-11-24 12:55:42.286"},
+            {"Client Name":"Tractor Supply","Shard":"","Complexity":"","Data People":"","Live Date":"2026-05-01","Overall Status":"Green","Red Status Reason":"","Test 1 Begin":"","Test 1 End":"","Test 2 Begin":"","Test 2 End":"","Test 3 Begin":"","Test 3 End":"","Production Begin":"","Production End":"","Refresh Begin":"","Refresh End":"","Modified Date":"2025-12-02 13:12:08.000"},
+            {"Client Name":"Dicks Sporting Goods","Shard":"","Complexity":"","Data People":"","Live Date":"2026-06-01","Overall Status":"Green","Red Status Reason":"","Test 1 Begin":"","Test 1 End":"","Test 2 Begin":"","Test 2 End":"","Test 3 Begin":"","Test 3 End":"","Production Begin":"","Production End":"","Refresh Begin":"","Refresh End":"","Modified Date":"2025-12-02 13:12:08.000"},
+            {"Client Name":"Sunlife","Shard":"","Complexity":3.0,"Data People":"Kevin\\nTimo","Live Date":"2026-07-01","Overall Status":"Green","Red Status Reason":"","Test 1 Begin":"","Test 1 End":"","Test 2 Begin":"","Test 2 End":"","Test 3 Begin":"","Test 3 End":"","Production Begin":"","Production End":"","Refresh Begin":"","Refresh End":"","Modified Date":"2025-11-25 07:41:29.000"},
+            {"Client Name":"Dentsply","Shard":"","Complexity":"","Data People":"","Live Date":"2026-07-01","Overall Status":"Green","Red Status Reason":"","Test 1 Begin":"","Test 1 End":"","Test 2 Begin":"","Test 2 End":"","Test 3 Begin":"","Test 3 End":"","Production Begin":"","Production End":"","Refresh Begin":"","Refresh End":"","Modified Date":"2025-12-02 13:12:08.000"},
+            {"Client Name":"DTCC","Shard":"","Complexity":"","Data People":"","Live Date":"2026-07-01","Overall Status":"Green","Red Status Reason":"","Test 1 Begin":"","Test 1 End":"","Test 2 Begin":"","Test 2 End":"","Test 3 Begin":"","Test 3 End":"","Production Begin":"","Production End":"","Refresh Begin":"","Refresh End":"","Modified Date":"2025-12-02 13:12:08.000"},
+            {"Client Name":"Grant Thorton","Shard":"","Complexity":"","Data People":"","Live Date":"2026-07-01","Overall Status":"Green","Red Status Reason":"","Test 1 Begin":"","Test 1 End":"","Test 2 Begin":"","Test 2 End":"","Test 3 Begin":"","Test 3 End":"","Production Begin":"","Production End":"","Refresh Begin":"","Refresh End":"","Modified Date":"2025-12-02 13:12:08.000"},
+            {"Client Name":"Lear","Shard":"","Complexity":3.0,"Data People":"Kevin","Live Date":"2026-08-01","Overall Status":"Green","Red Status Reason":"","Test 1 Begin":"","Test 1 End":"","Test 2 Begin":"","Test 2 End":"","Test 3 Begin":"","Test 3 End":"","Production Begin":"","Production End":"","Refresh Begin":"","Refresh End":"","Modified Date":"2025-12-02 13:12:08.000"},
+            {"Client Name":"DTE","Shard":"","Complexity":3.0,"Data People":"Cameron\\nRafa\\nShema\\nTimo","Live Date":"2026-10-01","Overall Status":"Green","Red Status Reason":"","Test 1 Begin":"2026-03-17","Test 1 End":"2026-04-07","Test 2 Begin":"2026-05-19","Test 2 End":"2026-06-09","Test 3 Begin":"2026-07-13","Test 3 End":"2026-07-31","Production Begin":"2026-09-01","Production End":"2026-09-15","Refresh Begin":"","Refresh End":"","Modified Date":"2025-12-02 13:12:08.000"},
+            {"Client Name":"Tractor Supply","Shard":"","Complexity":2.0,"Data People":"Sam","Live Date":"2027-01-01","Overall Status":"Green","Red Status Reason":"","Test 1 Begin":"","Test 1 End":"","Test 2 Begin":"","Test 2 End":"","Test 3 Begin":"","Test 3 End":"","Production Begin":"","Production End":"","Refresh Begin":"","Refresh End":"","Modified Date":"2025-11-24 11:53:58.000"},
+            {"Client Name":"Insperity Phase 3","Shard":"AE","Complexity":5.0,"Data People":"Kevin","Live Date":"2027-04-01","Overall Status":"Green","Red Status Reason":"","Test 1 Begin":"","Test 1 End":"","Test 2 Begin":"","Test 2 End":"","Test 3 Begin":"","Test 3 End":"","Production Begin":"","Production End":"","Refresh Begin":"","Refresh End":"","Modified Date":"2025-11-25 07:41:29.000"}
+        ];
+
+        let filteredProjects = [...projectsData];
+
+        function parseTeamMembers(dataString) {
+            if (!dataString) return [];
+            return dataString.split('\\n').map(name => name.trim()).filter(name => name);
+        }
+
+        function formatDate(dateString) {
+            if (!dateString) return 'TBD';
+            const date = new Date(dateString);
+            return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
+        }
+
+        function getComplexityDots(complexity) {
+            if (!complexity) return '<span style="color: var(--text-secondary);">N/A</span>';
+            const dots = Array(Math.floor(complexity)).fill('').map(() => 
+                '<span class="complexity-dot"></span>'
+            ).join('');
+            return `<span class="complexity-indicator">${dots}</span>`;
+        }
+
+        function updateStats() {
+            const total = filteredProjects.length;
+            const green = filteredProjects.filter(p => p['Overall Status'] === 'Green').length;
+            const yellow = filteredProjects.filter(p => p['Overall Status'] === 'Yellow').length;
+            const red = filteredProjects.filter(p => p['Overall Status'] === 'Red').length;
+            
+            const complexities = filteredProjects
+                .map(p => p.Complexity)
+                .filter(c => c && !isNaN(c));
+            const avgComplexity = complexities.length > 0 
+                ? (complexities.reduce((a, b) => a + b, 0) / complexities.length).toFixed(1)
+                : '0';
+
+            document.getElementById('totalProjects').textContent = total;
+            document.getElementById('greenCount').textContent = green;
+            document.getElementById('yellowCount').textContent = yellow;
+            document.getElementById('redCount').textContent = red;
+            document.getElementById('avgComplexity').textContent = avgComplexity;
+        }
+
+        function renderProjects() {
+            const grid = document.getElementById('projectsGrid');
+            
+            if (filteredProjects.length === 0) {
+                grid.innerHTML = '<div class="no-results">No projects match your filters</div>';
+                return;
+            }
+
+            grid.innerHTML = filteredProjects.map(project => {
+                const status = project['Overall Status'] || 'Green';
+                const statusClass = status.toLowerCase();
+                const teamMembers = parseTeamMembers(project['Data People']);
+                
+                return `
+                    <div class="project-card ${statusClass}">
+                        <div class="project-header">
+                            <div class="project-name">${project['Client Name']}</div>
+                            <span class="status-badge ${statusClass}">${status}</span>
+                        </div>
+                        
+                        <div class="project-details">
+                            <div class="detail-item">
+                                <span class="detail-label">Live Date</span>
+                                <span class="detail-value">${formatDate(project['Live Date'])}</span>
+                            </div>
+                            <div class="detail-item">
+                                <span class="detail-label">Complexity</span>
+                                <span class="detail-value">${getComplexityDots(project.Complexity)}</span>
+                            </div>
+                            ${project.Shard ? `
+                            <div class="detail-item">
+                                <span class="detail-label">Shard</span>
+                                <span class="detail-value">${project.Shard}</span>
+                            </div>
+                            ` : ''}
+                            ${project['Production Begin'] ? `
+                            <div class="detail-item">
+                                <span class="detail-label">Production</span>
+                                <span class="detail-value">${formatDate(project['Production Begin'])} ? ${formatDate(project['Production End'])}</span>
+                            </div>
+                            ` : ''}
+                        </div>
+                        
+                        ${teamMembers.length > 0 ? `
+                        <div class="team-members">
+                            ${teamMembers.map(member => `<span class="team-badge">${member}</span>`).join('')}
+                        </div>
+                        ` : ''}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function populateTeamFilter() {
+            const allTeamMembers = new Set();
+            projectsData.forEach(project => {
+                const members = parseTeamMembers(project['Data People']);
+                members.forEach(member => allTeamMembers.add(member));
+            });
+
+            const teamFilter = document.getElementById('teamFilter');
+            Array.from(allTeamMembers).sort().forEach(member => {
+                const option = document.createElement('option');
+                option.value = member;
+                option.textContent = member;
+                teamFilter.appendChild(option);
+            });
+        }
+
+        function applyFilters() {
+            const statusFilter = document.getElementById('statusFilter').value;
+            const teamFilter = document.getElementById('teamFilter').value;
+            const complexityFilter = document.getElementById('complexityFilter').value;
+            const searchInput = document.getElementById('searchInput').value.toLowerCase();
+
+            filteredProjects = projectsData.filter(project => {
+                // Status filter
+                if (statusFilter && project['Overall Status'] !== statusFilter) return false;
+
+                // Team filter
+                if (teamFilter) {
+                    const teamMembers = parseTeamMembers(project['Data People']);
+                    if (!teamMembers.includes(teamFilter)) return false;
+                }
+
+                // Complexity filter
+                if (complexityFilter && project.Complexity !== parseFloat(complexityFilter)) return false;
+
+                // Search filter
+                if (searchInput && !project['Client Name'].toLowerCase().includes(searchInput)) return false;
+
+                return true;
+            });
+
+            updateStats();
+            renderProjects();
+        }
+
+        // Initialize
+        document.addEventListener('DOMContentLoaded', () => {
+            populateTeamFilter();
+            applyFilters();
+            
+            // Set last updated date
+            document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
+
+            // Add event listeners
+            document.getElementById('statusFilter').addEventListener('change', applyFilters);
+            document.getElementById('teamFilter').addEventListener('change', applyFilters);
+            document.getElementById('complexityFilter').addEventListener('change', applyFilters);
+            document.getElementById('searchInput').addEventListener('input', applyFilters);
+        });
+    </script>
+</body>
+</html>
