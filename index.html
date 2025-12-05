@@ -421,7 +421,10 @@ const projectsData = [{"Client Name": "Saltchuk ACA", "Shard": "S", "Complexity"
 
         function parseDate(dateString) {
             if (!dateString) return null;
-            return new Date(dateString);
+            // Parse the date string as local time, not UTC
+            // This prevents timezone conversion from shifting dates
+            const [year, month, day] = dateString.split('-').map(Number);
+            return new Date(year, month - 1, day);
         }
 
         function formatDate(dateString) {
