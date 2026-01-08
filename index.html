@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Data Collective — 2026 Project Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Archivo+Black&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
     <style>
         :root {
             --bg-dark: #0d0d0d;
@@ -44,6 +45,15 @@
             margin-bottom: 40px;
             padding-bottom: 20px;
             border-bottom: 3px solid var(--accent-cyan);
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .header-left {
+            flex: 1;
         }
 
         h1 {
@@ -60,6 +70,83 @@
             color: var(--text-secondary);
             text-transform: uppercase;
             letter-spacing: 2px;
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .btn {
+            appearance: none;
+            border: 1px solid var(--border);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            padding: 12px 18px;
+            font-family: 'IBM Plex Mono', monospace;
+            font-size: 0.85rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+
+        .btn:hover {
+            background: var(--accent-cyan);
+            color: var(--bg-dark);
+            border-color: var(--accent-cyan);
+        }
+
+        .btn.primary {
+            border-color: var(--accent-cyan);
+            background: linear-gradient(135deg, rgba(0,255,204,0.2), rgba(0,255,204,0.05));
+        }
+
+        .cloud-status {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 12px 16px;
+            background: var(--bg-card);
+            border: 1px solid var(--border);
+            font-size: 0.8rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            z-index: 1000;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .cloud-status.connected {
+            border-color: var(--green);
+            color: var(--green);
+        }
+
+        .cloud-status.disconnected {
+            border-color: var(--yellow);
+            color: var(--yellow);
+        }
+
+        .cloud-status .btn-mini {
+            padding: 6px 10px;
+            font-size: 0.7rem;
+            background: var(--bg-dark);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            cursor: pointer;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-weight: 700;
+        }
+
+        .cloud-status .btn-mini:hover {
+            background: var(--accent-cyan);
+            color: var(--bg-dark);
+            border-color: var(--accent-cyan);
         }
 
         .dashboard-grid {
@@ -305,6 +392,13 @@
             font-style: italic;
         }
 
+        .loading {
+            text-align: center;
+            padding: 40px;
+            color: var(--accent-cyan);
+            font-weight: 700;
+        }
+
         footer {
             margin-top: 40px;
             padding: 20px;
@@ -322,39 +416,55 @@
             .milestone-item {
                 grid-template-columns: 1fr;
             }
+
+            h1 {
+                font-size: 2.5rem;
+            }
         }
     </style>
 </head>
 <body>
+    <!-- Cloud Status Indicator -->
+    <div class="cloud-status disconnected" id="cloudStatus">
+        <span id="cloudStatusText">☁️ Excel: Not Connected</span>
+        <button class="btn-mini" onclick="setupExcelFile()">Setup File</button>
+    </div>
+
     <div class="container">
         <header>
-            <h1>DATA COLLECTIVE</h1>
-            <div class="subtitle">2026 Project Dashboard // Tier 1 Import Support</div>
+            <div class="header-left">
+                <h1>DATA COLLECTIVE</h1>
+                <div class="subtitle">2026 Project Dashboard // Tier 1 Import Support</div>
+            </div>
+            <div class="header-actions">
+                <button class="btn primary" onclick="refreshData()">🔄 Refresh Data</button>
+                <button class="btn" onclick="window.print()">🖨️ Print</button>
+            </div>
         </header>
 
         <div class="dashboard-grid">
             <div class="sidebar">
                 <div class="stat-card">
                     <div class="stat-label">Total Projects</div>
-                    <div class="stat-value" id="totalProjects">0</div>
+                    <div class="stat-value" id="totalProjects">-</div>
                     <div class="stat-subtext">Across 2026-2027</div>
                 </div>
                 
                 <div class="stat-card" style="border-left-color: var(--green);">
                     <div class="stat-label">Green Status</div>
-                    <div class="stat-value" id="greenCount" style="color: var(--green);">0</div>
+                    <div class="stat-value" id="greenCount" style="color: var(--green);">-</div>
                     <div class="stat-subtext">On track</div>
                 </div>
                 
                 <div class="stat-card" style="border-left-color: var(--yellow);">
                     <div class="stat-label">Yellow Status</div>
-                    <div class="stat-value" id="yellowCount" style="color: var(--yellow);">0</div>
+                    <div class="stat-value" id="yellowCount" style="color: var(--yellow);">-</div>
                     <div class="stat-subtext">At risk</div>
                 </div>
                 
                 <div class="stat-card" style="border-left-color: var(--red);">
                     <div class="stat-label">Red Status</div>
-                    <div class="stat-value" id="redCount" style="color: var(--red);">0</div>
+                    <div class="stat-value" id="redCount" style="color: var(--red);">-</div>
                     <div class="stat-subtext">Critical</div>
                 </div>
 
@@ -384,7 +494,9 @@
             <div class="main-content">
                 <div class="section">
                     <div class="section-header">⚡ Upcoming Milestones (Next 90 Days)</div>
-                    <div class="upcoming-milestones" id="upcomingMilestones"></div>
+                    <div class="upcoming-milestones" id="upcomingMilestones">
+                        <div class="loading">Click "Refresh Data" to load projects</div>
+                    </div>
                 </div>
 
                 <div class="section">
@@ -401,7 +513,11 @@
                                     <th>Team</th>
                                 </tr>
                             </thead>
-                            <tbody id="projectsTableBody"></tbody>
+                            <tbody id="projectsTableBody">
+                                <tr>
+                                    <td colspan="6" class="loading">Click "Refresh Data" to load projects</td>
+                                </tr>
+                            </tbody>
                         </table>
                     </div>
                 </div>
@@ -410,21 +526,114 @@
 
         <footer>
             <strong>THE DATA COLLECTIVE</strong> // bswift Tier 1 Import Support Team<br>
-            Last Updated: <span id="lastUpdated"></span>
+            Last Updated: <span id="lastUpdated">Not loaded</span>
         </footer>
     </div>
 
     <script>
-const projectsData = [{"Client Name": "Saltchuk ACA", "Shard": "S", "Complexity": 5.0, "Data People": "Rafa\nTimo", "Live Date": "2025-12-31", "Overall Status": "Yellow", "Red Status Reason": null, "Supp SQL": null, "Loop Arounds": null, "Test 1 Begin": null, "Test 1 End": null, "Test 2 Begin": null, "Test 2 End": null, "Test 3 Begin": null, "Test 3 End": null, "Production Begin": null, "Production End": null, "Refresh Begin": null, "Refresh End": null, "Modified Date": "2025-12-05"}, {"Client Name": "OSG/Tote", "Shard": "S", "Complexity": 3.0, "Data People": "Kevin\nTimo", "Live Date": "2025-12-31", "Overall Status": "Green", "Red Status Reason": null, "Supp SQL": null, "Loop Arounds": null, "Test 1 Begin": null, "Test 1 End": null, "Test 2 Begin": null, "Test 2 End": null, "Test 3 Begin": null, "Test 3 End": null, "Production Begin": null, "Production End": null, "Refresh Begin": null, "Refresh End": null, "Modified Date": "2025-12-03"}, {"Client Name": "Vail Resorts", "Shard": "V", "Complexity": 4.0, "Data People": "Rafa\nSam", "Live Date": "2026-03-02", "Overall Status": "Yellow", "Red Status Reason": null, "Supp SQL": null, "Loop Arounds": null, "Test 1 Begin": "2025-10-27", "Test 1 End": "2025-11-07", "Test 2 Begin": "2025-12-02", "Test 2 End": "2025-12-18", "Test 3 Begin": null, "Test 3 End": null, "Production Begin": "2026-01-20", "Production End": "2026-02-03", "Refresh Begin": "2026-02-17", "Refresh End": "2026-02-25", "Modified Date": "2025-12-05"}, {"Client Name": "Insperity Phase 2", "Shard": "AE", "Complexity": 5.0, "Data People": "Kevin", "Live Date": "2026-04-01", "Overall Status": "Green", "Red Status Reason": null, "Supp SQL": null, "Loop Arounds": null, "Test 1 Begin": null, "Test 1 End": null, "Test 2 Begin": null, "Test 2 End": null, "Test 3 Begin": null, "Test 3 End": null, "Production Begin": "2026-01-12", "Production End": "2026-01-28", "Refresh Begin": "2026-02-27", "Refresh End": "2026-03-05", "Modified Date": "2025-12-15"}, {"Client Name": "Construction Resources", "Shard": "YY", "Complexity": 3.0, "Data People": "Sam\nTimi", "Live Date": "2026-04-01", "Overall Status": "Green", "Red Status Reason": null, "Supp SQL": null, "Loop Arounds": null, "Test 1 Begin": "2026-01-14", "Test 1 End": "2026-01-30", "Test 2 Begin": null, "Test 2 End": null, "Test 3 Begin": null, "Test 3 End": null, "Production Begin": null, "Production End": null, "Refresh Begin": null, "Refresh End": null, "Modified Date": "2025-12-24"}, {"Client Name": "Brookdale", "Shard": "AB", "Complexity": 3.0, "Data People": "Rafa\nSam", "Live Date": "2026-05-01", "Overall Status": "Green", "Red Status Reason": null, "Supp SQL": null, "Loop Arounds": null, "Test 1 Begin": "2026-01-20", "Test 1 End": "2026-02-19", "Test 2 Begin": "2026-02-26", "Test 2 End": "2026-03-26", "Test 3 Begin": null, "Test 3 End": null, "Production Begin": "2026-03-30", "Production End": "2026-04-21", "Refresh Begin": null, "Refresh End": null, "Modified Date": "2025-12-05"}, {"Client Name": "UMMS", "Shard": "YY", "Complexity": 3.0, "Data People": "Cameron\nRafa\nShema\nTimo", "Live Date": "2026-05-01", "Overall Status": "Green", "Red Status Reason": null, "Supp SQL": null, "Loop Arounds": null, "Test 1 Begin": "2026-01-23", "Test 1 End": "2026-02-13", "Test 2 Begin": "2026-03-13", "Test 2 End": "2026-03-27", "Test 3 Begin": null, "Test 3 End": null, "Production Begin": "2026-04-24", "Production End": "2026-05-08", "Refresh Begin": null, "Refresh End": null, "Modified Date": "2025-12-05"}, {"Client Name": "Dicks Sporting Goods", "Shard": "Z", "Complexity": 4.0, "Data People": "Kevin\nSam", "Live Date": "2026-06-01", "Overall Status": "Green", "Red Status Reason": null, "Supp SQL": null, "Loop Arounds": null, "Test 1 Begin": "2026-02-18", "Test 1 End": "2026-03-06", "Test 2 Begin": "2026-04-06", "Test 2 End": "2026-04-20", "Test 3 Begin": null, "Test 3 End": null, "Production Begin": "2026-05-11", "Production End": "2026-05-21", "Refresh Begin": "2026-05-22", "Refresh End": "2026-05-26", "Modified Date": "2025-12-11"}, {"Client Name": "Sunlife", "Shard": "V", "Complexity": 3.0, "Data People": "Kevin\nShema\nTimo", "Live Date": "2026-07-01", "Overall Status": "Green", "Red Status Reason": null, "Supp SQL": null, "Loop Arounds": null, "Test 1 Begin": "2026-01-13", "Test 1 End": "2026-02-16", "Test 2 Begin": "2026-03-06", "Test 2 End": "2026-04-14", "Test 3 Begin": "2026-05-18", "Test 3 End": null, "Production Begin": "2026-05-26", "Production End": "2026-06-29", "Refresh Begin": null, "Refresh End": null, "Modified Date": "2025-12-05"}, {"Client Name": "Dentsply", "Shard": "AB", "Complexity": 3.0, "Data People": "Cameron\nRafa\nShema\nTimo", "Live Date": "2026-07-01", "Overall Status": "Green", "Red Status Reason": null, "Supp SQL": null, "Loop Arounds": null, "Test 1 Begin": "2026-02-16", "Test 1 End": "2026-03-06", "Test 2 Begin": "2026-04-06", "Test 2 End": "2026-04-22", "Test 3 Begin": null, "Test 3 End": null, "Production Begin": "2026-06-01", "Production End": "2026-06-17", "Refresh Begin": "2026-05-22", "Refresh End": "2026-06-25", "Modified Date": "2025-12-05"}, {"Client Name": "DTCC", "Shard": "YY", "Complexity": 3.0, "Data People": "Sam\nTimi", "Live Date": "2026-07-01", "Overall Status": "Green", "Red Status Reason": null, "Supp SQL": null, "Loop Arounds": null, "Test 1 Begin": "2026-03-05", "Test 1 End": "2026-03-23", "Test 2 Begin": "2026-04-13", "Test 2 End": "2026-04-24", "Test 3 Begin": null, "Test 3 End": null, "Production Begin": "2026-05-29", "Production End": "2026-06-09", "Refresh Begin": "2026-06-22", "Refresh End": "2026-06-24", "Modified Date": "2025-12-24"}, {"Client Name": "Grant Thorton", "Shard": "V", "Complexity": 3.0, "Data People": "Jessica\nKevin", "Live Date": "2026-07-01", "Overall Status": "Green", "Red Status Reason": null, "Supp SQL": null, "Loop Arounds": null, "Test 1 Begin": "2026-03-12", "Test 1 End": "2026-03-20", "Test 2 Begin": "2026-04-20", "Test 2 End": "2026-05-04", "Test 3 Begin": null, "Test 3 End": null, "Production Begin": "2026-06-01", "Production End": "2026-06-10", "Refresh Begin": "2026-06-25", "Refresh End": "2026-06-26", "Modified Date": "2025-12-24"}, {"Client Name": "Pulte Group", "Shard": null, "Complexity": 3.0, "Data People": "Jessica\nKevin", "Live Date": "2026-07-01", "Overall Status": "Green", "Red Status Reason": null, "Supp SQL": null, "Loop Arounds": null, "Test 1 Begin": null, "Test 1 End": null, "Test 2 Begin": null, "Test 2 End": null, "Test 3 Begin": null, "Test 3 End": null, "Production Begin": null, "Production End": null, "Refresh Begin": null, "Refresh End": null, "Modified Date": "2025-12-24"}, {"Client Name": "Lear", "Shard": "Z", "Complexity": 4.0, "Data People": "Jessica\nKevin", "Live Date": "2026-08-03", "Overall Status": "Green", "Red Status Reason": null, "Supp SQL": null, "Loop Arounds": null, "Test 1 Begin": "2026-03-23", "Test 1 End": "2026-04-15", "Test 2 Begin": "2026-05-18", "Test 2 End": "2026-06-02", "Test 3 Begin": null, "Test 3 End": null, "Production Begin": "2026-07-01", "Production End": "2026-07-16", "Refresh Begin": "2026-07-23", "Refresh End": "2026-07-28", "Modified Date": "2025-12-24"}, {"Client Name": "TBD", "Shard": null, "Complexity": null, "Data People": "Cameron\nRafa\nShema\nTimo", "Live Date": "2026-09-01", "Overall Status": "Green", "Red Status Reason": null, "Supp SQL": null, "Loop Arounds": null, "Test 1 Begin": null, "Test 1 End": null, "Test 2 Begin": null, "Test 2 End": null, "Test 3 Begin": null, "Test 3 End": null, "Production Begin": null, "Production End": null, "Refresh Begin": null, "Refresh End": null, "Modified Date": "2025-12-05"}, {"Client Name": "DTE", "Shard": "N", "Complexity": 4.0, "Data People": "Sam\nTimi", "Live Date": "2026-10-01", "Overall Status": "Green", "Red Status Reason": null, "Supp SQL": null, "Loop Arounds": null, "Test 1 Begin": "2026-03-17", "Test 1 End": "2026-04-07", "Test 2 Begin": "2026-05-19", "Test 2 End": "2026-06-09", "Test 3 Begin": "2026-07-13", "Test 3 End": "2026-07-31", "Production Begin": "2026-09-01", "Production End": "2026-09-15", "Refresh Begin": null, "Refresh End": null, "Modified Date": "2025-12-24"}, {"Client Name": "Tractor Supply", "Shard": "V", "Complexity": 2.0, "Data People": "Cameron\nRafa\nShema\nTimo", "Live Date": "2026-05-01", "Overall Status": "Green", "Red Status Reason": null, "Supp SQL": null, "Loop Arounds": null, "Test 1 Begin": "2026-01-22", "Test 1 End": "2026-02-09", "Test 2 Begin": "2026-03-03", "Test 2 End": "2026-03-16", "Test 3 Begin": null, "Test 3 End": null, "Production Begin": "2026-04-13", "Production End": "2026-04-20", "Refresh Begin": null, "Refresh End": null, "Modified Date": "2025-12-22"}];
+        let excelFileHandle = null;
+        let projectsData = [];
+        let filteredProjects = [];
 
-        let filteredProjects = [...projectsData];
+        async function setupExcelFile() {
+            try {
+                const [fileHandle] = await window.showOpenFilePicker({
+                    types: [{
+                        description: 'Excel Files',
+                        accept: {
+                            'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet': ['.xlsx'],
+                            'application/vnd.ms-excel': ['.xls']
+                        }
+                    }],
+                    startIn: 'documents'
+                });
+
+                excelFileHandle = fileHandle;
+                
+                document.getElementById('cloudStatus').className = 'cloud-status connected';
+                document.getElementById('cloudStatusText').textContent = `☁️ Excel: ${fileHandle.name}`;
+
+                localStorage.setItem('excelFileName', fileHandle.name);
+
+                alert('✓ Excel file connected!\n\nNow click "Refresh Data" to load your projects.');
+            } catch (err) {
+                if (err.name !== 'AbortError') {
+                    console.error('Failed to setup file:', err);
+                    alert('✕ Failed to setup Excel file.\n\nMake sure you select the 2026_Projects.xlsx file.');
+                }
+            }
+        }
+
+        async function refreshData() {
+            if (!excelFileHandle) {
+                const setup = confirm('Excel file not setup yet.\n\nSelect your 2026_Projects.xlsx file?');
+                if (setup) {
+                    await setupExcelFile();
+                    if (!excelFileHandle) return;
+                } else {
+                    return;
+                }
+            }
+
+            try {
+                const file = await excelFileHandle.getFile();
+                const arrayBuffer = await file.arrayBuffer();
+                const workbook = XLSX.read(arrayBuffer, { type: 'array', cellDates: true });
+                
+                const sheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[sheetName];
+                
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { 
+                    raw: false,
+                    dateNF: 'yyyy-mm-dd'
+                });
+
+                projectsData = jsonData.map(row => ({
+                    'Client Name': row['Client Name'] || '',
+                    'Shard': row['Shard'] || '',
+                    'Complexity': row['Complexity'] ? parseFloat(row['Complexity']) : null,
+                    'Data People': row['Data People'] || '',
+                    'Live Date': row['Live Date'] || null,
+                    'Overall Status': row['Overall Status'] || 'Green',
+                    'Red Status Reason': row['Red Status Reason'] || null,
+                    'Supp SQL': row['Supp SQL'] || null,
+                    'Loop Arounds': row['Loop Arounds'] || null,
+                    'Test 1 Begin': row['Test 1 Begin'] || null,
+                    'Test 1 End': row['Test 1 End'] || null,
+                    'Test 2 Begin': row['Test 2 Begin'] || null,
+                    'Test 2 End': row['Test 2 End'] || null,
+                    'Test 3 Begin': row['Test 3 Begin'] || null,
+                    'Test 3 End': row['Test 3 End'] || null,
+                    'Production Begin': row['Production Begin'] || null,
+                    'Production End': row['Production End'] || null,
+                    'Refresh Begin': row['Refresh Begin'] || null,
+                    'Refresh End': row['Refresh End'] || null,
+                    'Modified Date': row['Modified Date'] || null
+                }));
+
+                document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
+                
+                applyFilters();
+                
+                alert(`✓ Data refreshed!\n\n${projectsData.length} projects loaded from Excel.`);
+            } catch (err) {
+                console.error('Failed to read Excel file:', err);
+                
+                if (err.name === 'NotAllowedError') {
+                    excelFileHandle = null;
+                    document.getElementById('cloudStatus').className = 'cloud-status disconnected';
+                    document.getElementById('cloudStatusText').textContent = '☁️ Excel: Permission Lost';
+                    alert('✕ Permission denied.\n\nPlease click "Setup File" again to grant access.');
+                } else {
+                    alert('✕ Failed to read Excel file.\n\nError: ' + err.message);
+                }
+            }
+        }
 
         function parseDate(dateString) {
-            if (!dateString) return null;
-            // Parse the date string as local time, not UTC
-            // This prevents timezone conversion from shifting dates
-            const [year, month, day] = dateString.split('-').map(Number);
-            return new Date(year, month - 1, day);
+            if (!dateString || dateString === 'null') return null;
+            const date = new Date(dateString);
+            return isNaN(date.getTime()) ? null : date;
         }
 
         function formatDate(dateString) {
@@ -435,8 +644,8 @@ const projectsData = [{"Client Name": "Saltchuk ACA", "Shard": "S", "Complexity"
         }
 
         function parseTeamMembers(dataString) {
-            if (!dataString || dataString === 'null' || dataString === null) return [];
-            return dataString.split('\\n').map(name => name.trim()).filter(name => name);
+            if (!dataString || dataString === 'null') return [];
+            return dataString.split(/[\n,]/).map(name => name.trim()).filter(name => name);
         }
 
         function getCurrentPhase(project) {
@@ -490,7 +699,7 @@ const projectsData = [{"Client Name": "Saltchuk ACA", "Shard": "S", "Complexity"
                 phases.forEach(phase => {
                     if (phase.date) {
                         const phaseDate = parseDate(phase.date);
-                        if (phaseDate >= now && phaseDate <= ninetyDaysOut) {
+                        if (phaseDate && phaseDate >= now && phaseDate <= ninetyDaysOut) {
                             milestones.push({
                                 date: phaseDate,
                                 dateString: phase.date,
@@ -585,6 +794,7 @@ const projectsData = [{"Client Name": "Saltchuk ACA", "Shard": "S", "Complexity"
             });
 
             const teamFilter = document.getElementById('teamFilter');
+            teamFilter.innerHTML = '<option value="">All</option>';
             Array.from(allTeamMembers).sort().forEach(member => {
                 const option = document.createElement('option');
                 option.value = member;
@@ -594,6 +804,8 @@ const projectsData = [{"Client Name": "Saltchuk ACA", "Shard": "S", "Complexity"
         }
 
         function applyFilters() {
+            if (projectsData.length === 0) return;
+
             const statusFilter = document.getElementById('statusFilter').value;
             const teamFilter = document.getElementById('teamFilter').value;
             const searchInput = document.getElementById('searchInput').value.toLowerCase();
@@ -611,17 +823,20 @@ const projectsData = [{"Client Name": "Saltchuk ACA", "Shard": "S", "Complexity"
                 return true;
             });
 
+            populateTeamFilter();
             updateStats();
             renderUpcomingMilestones();
             renderProjectsTable();
         }
 
-        document.addEventListener('DOMContentLoaded', () => {
-            populateTeamFilter();
-            applyFilters();
-            
-            document.getElementById('lastUpdated').textContent = new Date().toLocaleString();
-            
+        // Check if we have a saved file name
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedFileName = localStorage.getItem('excelFileName');
+            if (savedFileName) {
+                document.getElementById('cloudStatus').className = 'cloud-status connected';
+                document.getElementById('cloudStatusText').textContent = `☁️ Excel: ${savedFileName}`;
+            }
+
             document.getElementById('statusFilter').addEventListener('change', applyFilters);
             document.getElementById('teamFilter').addEventListener('change', applyFilters);
             document.getElementById('searchInput').addEventListener('input', applyFilters);
