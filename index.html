@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Data Collective – 2026 Project Dashboard</title>
+    <title>Data Collective - 2026 Project Dashboard</title>
     <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;600;700&family=Archivo+Black&display=swap" rel="stylesheet">
     <style>
         :root {
@@ -383,12 +383,12 @@
 
             <div class="main-content">
                 <div class="section">
-                    <div class="section-header">⚡ Upcoming Milestones (Next 90 Days)</div>
+                    <div class="section-header">Upcoming Milestones (Next 90 Days)</div>
                     <div class="upcoming-milestones" id="upcomingMilestones"></div>
                 </div>
 
                 <div class="section">
-                    <div class="section-header">📊 All Projects</div>
+                    <div class="section-header">All Projects</div>
                     <div style="overflow-x: auto;">
                         <table class="projects-table">
                             <thead>
@@ -545,7 +545,7 @@
                 const status = project['Overall Status'] || 'Green';
                 const phase = getCurrentPhase(project);
                 const teamMembers = parseTeamMembers(project['Data People']);
-                const complexity = project.Complexity;
+                const complexity = project['Complexity'];
 
                 return `
                     <tr>
